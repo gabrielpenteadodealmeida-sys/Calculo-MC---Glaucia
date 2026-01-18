@@ -1,24 +1,284 @@
-Pires Acabamentos — Análise de Margem (ST)
 
-1. Produto
-Custo do produto (sem IPI)
-IPI (%)
-Valor do IPI (R$)
-Crédito PIS/COFINS (%)
-2. ICMS / Substituição Tributária
-MVA / IVA (%)
-Débito ICMS (%)
-Crédito ICMS (%)
-Valor da ST (R$)
-3. Venda
-Preço de venda
-Frete (% sobre preço de venda)
-Valor do frete (R$)
-Comissão (%)
-Valor da comissão (R$)
-4. Resultado
-Custo líquido: R$ 0,00
-Lucro bruto: R$ 0,00 (0,0%)
-Margem de contribuição: R$ 0,00 (0,0%)
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pires Acabamentos | Análise Margem ST</title>
 
-5. Composição do preço de venda
+<style>
+:root{
+  --grafite:#1f1f1f;
+  --branco:#ffffff;
+  --cinza:#f1f1f1;
+  --laranja:#f36a21;
+  --verde:#2e7d32;
+  --amarelo:#ff9800;
+  --vermelho:#c62828;
+}
+body{
+  font-family:Segoe UI, Arial, sans-serif;
+  background:var(--grafite);
+  color:#222;
+  padding:20px;
+}
+.container{
+  max-width:1100px;
+  margin:auto;
+}
+h1,h2{
+  color:var(--laranja);
+}
+section{
+  background:var(--branco);
+  padding:18px;
+  border-radius:10px;
+  margin-bottom:20px;
+}
+label{
+  display:block;
+  font-weight:600;
+  margin-top:10px;
+  color:#555;
+}
+input{
+  width:100%;
+  padding:8px;
+  margin-top:4px;
+  border-radius:6px;
+  border:1px solid #ccc;
+}
+input[readonly]{
+  background:var(--cinza);
+}
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+.resultado{
+  font-size:16px;
+  font-weight:bold;
+}
+#alerta{
+  margin-top:15px;
+  padding:12px;
+  border-radius:8px;
+  text-align:center;
+  font-weight:bold;
+}
+canvas{
+  background:#fff;
+  border-radius:10px;
+  padding:10px;
+  max-height:260px;
+}
+@media(max-width:800px){
+  .grid{grid-template-columns:1fr}
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+</head>
+
+<body>
+<div class="container">
+
+<h1>Pires Acabamentos — Análise de Margem (ST)</h1>
+<p style="color:#ddd">Percentuais em número inteiro (ex: 18 = 18%) • Modelo ST</p>
+
+<section>
+<h2>1. Produto</h2>
+<div class="grid">
+  <div>
+    <label>Custo do produto (sem IPI)</label>
+    <input id="custo" type="number" step="0.01">
+  </div>
+  <div>
+    <label>IPI (%)</label>
+    <input id="ipiPerc" type="number" step="0.01">
+  </div>
+  <div>
+    <label>Valor do IPI (R$)</label>
+    <input id="ipiValor" readonly>
+  </div>
+  <div>
+    <label>Crédito PIS/COFINS (%)</label>
+    <input id="pisCred" type="number" step="0.01" value="9.25">
+  </div>
+</div>
+</section>
+
+<section>
+<h2>2. ICMS / Substituição Tributária</h2>
+<div class="grid">
+  <div>
+    <label>MVA / IVA (%)</label>
+    <input id="mva" type="number" step="0.01">
+  </div>
+  <div>
+    <label>Débito ICMS (%)</label>
+    <input id="icmsDeb" type="number" step="0.01">
+  </div>
+  <div>
+    <label>Crédito ICMS (%)</label>
+    <input id="icmsCred" type="number" step="0.01">
+  </div>
+  <div>
+    <label>Valor da ST (R$)</label>
+    <input id="stValor" readonly>
+  </div>
+</div>
+</section>
+
+<section>
+<h2>3. Venda</h2>
+<div class="grid">
+  <div>
+    <label>Preço de venda</label>
+    <input id="precoVenda" type="number" step="0.01">
+  </div>
+  <div>
+    <label>Frete (% sobre preço de venda)</label>
+    <input id="fretePerc" type="number" step="0.01">
+  </div>
+  <div>
+    <label>Valor do frete (R$)</label>
+    <input id="freteValor" readonly>
+  </div>
+  <div>
+    <label>Comissão (%)</label>
+    <input id="comissaoPerc" type="number" step="0.01">
+  </div>
+  <div>
+    <label>Valor da comissão (R$)</label>
+    <input id="comissaoValor" readonly>
+  </div>
+</div>
+</section>
+
+<section>
+<h2>4. Resultado</h2>
+<p class="resultado">Custo líquido: <span id="custoLiquido">R$ 0,00</span></p>
+<p class="resultado">Lucro bruto: <span id="lucroBruto">R$ 0,00</span> (<span id="lucroBrutoPct">0,0%</span>)</p>
+<p class="resultado">Margem de contribuição: <span id="mcValor">R$ 0,00</span> (<span id="mcPct">0,0%</span>)</p>
+<div id="alerta"></div>
+</section>
+
+<section>
+<h2>5. Composição do preço de venda</h2>
+<canvas id="pieChart"></canvas>
+</section>
+
+</div>
+
+<script>
+Chart.register(ChartDataLabels);
+let pieChart;
+
+function moeda(v){return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});}
+function perc(v){return (v*100).toFixed(1)+'%';}
+
+function calcular(){
+  const custo = Number(custoEl.value)||0;
+
+  const ipiPerc = (Number(ipiPercEl.value)||0)/100;
+  const pisCred = (Number(pisCredEl.value)||0)/100;
+  const mva = (Number(mvaEl.value)||0)/100;
+  const icmsDeb = (Number(icmsDebEl.value)||0)/100;
+  const icmsCred = (Number(icmsCredEl.value)||0)/100;
+
+  const preco = Number(precoEl.value)||0;
+  const fretePerc = (Number(fretePercEl.value)||0)/100;
+  const comPerc = (Number(comPercEl.value)||0)/100;
+
+  const ipiValor = custo * ipiPerc;
+  ipiValorEl.value = moeda(ipiValor);
+
+  const creditoPis = custo * pisCred;
+
+  const baseST = (custo + ipiValor) * (1 + mva);
+  const st = (baseST * icmsDeb) - (custo * icmsCred);
+  stValorEl.value = moeda(st);
+
+  const custoLiquido = custo + ipiValor - creditoPis + st;
+  custoLiquidoEl.innerText = moeda(custoLiquido);
+
+  const pisDebito = preco * 0.0925;
+  const frete = preco * fretePerc;
+  freteValorEl.value = moeda(frete);
+
+  const comissao = preco * comPerc;
+  comissaoValorEl.value = moeda(comissao);
+
+  const lucroBruto = preco - custoLiquido - pisDebito;
+  lucroBrutoEl.innerText = moeda(lucroBruto);
+  lucroBrutoPctEl.innerText = perc(preco===0?0:lucroBruto/preco);
+
+  const mcValor = lucroBruto - comissao - frete;
+  mcValorEl.innerText = moeda(mcValor);
+  mcPctEl.innerText = perc(preco===0?0:mcValor/preco);
+
+  if(mcValor/preco < 0.20){
+    alertaEl.style.background='var(--vermelho)';alertaEl.style.color='#fff';alertaEl.innerText='Margem baixa';
+  }else if(mcValor/preco < 0.27){
+    alertaEl.style.background='var(--amarelo)';alertaEl.style.color='#000';alertaEl.innerText='Margem apertada';
+  }else{
+    alertaEl.style.background='var(--verde)';alertaEl.style.color='#fff';alertaEl.innerText='Margem saudável';
+  }
+
+  atualizarGrafico(custoLiquido, pisDebito+st, frete, comissao, mcValor);
+}
+
+function atualizarGrafico(custo, impostos, frete, comissao, margem){
+  const dados = [custo, impostos, frete, comissao, margem];
+  const labels = ['Custo líquido','Impostos','Frete','Comissão','MC'];
+
+  if(pieChart) pieChart.destroy();
+
+  pieChart = new Chart(pieCtx,{
+    type:'pie',
+    data:{
+      labels:labels,
+      datasets:[{
+        data:dados,
+        backgroundColor:['#1f1f1f','#f36a21','#ff9800','#9e9e9e','#2e7d32']
+      }]
+    },
+    options:{
+      plugins:{
+        datalabels:{formatter:v=>moeda(v),color:'#fff'}
+      }
+    }
+  });
+}
+
+const custoEl = document.getElementById('custo');
+const ipiPercEl = document.getElementById('ipiPerc');
+const pisCredEl = document.getElementById('pisCred');
+const mvaEl = document.getElementById('mva');
+const icmsDebEl = document.getElementById('icmsDeb');
+const icmsCredEl = document.getElementById('icmsCred');
+const precoEl = document.getElementById('precoVenda');
+const fretePercEl = document.getElementById('fretePerc');
+const comPercEl = document.getElementById('comissaoPerc');
+
+const ipiValorEl = document.getElementById('ipiValor');
+const stValorEl = document.getElementById('stValor');
+const custoLiquidoEl = document.getElementById('custoLiquido');
+const freteValorEl = document.getElementById('freteValor');
+const comissaoValorEl = document.getElementById('comissaoValor');
+const lucroBrutoEl = document.getElementById('lucroBruto');
+const lucroBrutoPctEl = document.getElementById('lucroBrutoPct');
+const mcValorEl = document.getElementById('mcValor');
+const mcPctEl = document.getElementById('mcPct');
+const alertaEl = document.getElementById('alerta');
+
+const pieCtx = document.getElementById('pieChart');
+
+document.querySelectorAll('input').forEach(i=>i.addEventListener('input',calcular));
+</script>
+
+</body>
+</html>
