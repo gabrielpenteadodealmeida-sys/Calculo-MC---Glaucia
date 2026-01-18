@@ -11,7 +11,7 @@
   --grafite:#1f1f1f;
   --branco:#ffffff;
   --cinza:#f1f1f1;
-  --laranja:#f36a21;
+  --laranja:rgb(210,55,50);
   --verde:#2e7d32;
   --amarelo:#ff9800;
   --vermelho:#c62828;
@@ -22,60 +22,17 @@ body{
   color:#222;
   padding:20px;
 }
-.container{
-  max-width:1100px;
-  margin:auto;
-}
-h1,h2{
-  color:var(--laranja);
-}
-section{
-  background:var(--branco);
-  padding:18px;
-  border-radius:10px;
-  margin-bottom:20px;
-}
-label{
-  display:block;
-  font-weight:600;
-  margin-top:10px;
-  color:#555;
-}
-input{
-  width:100%;
-  padding:8px;
-  margin-top:4px;
-  border-radius:6px;
-  border:1px solid #ccc;
-}
-input[readonly]{
-  background:var(--cinza);
-}
-.grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:16px;
-}
-.resultado{
-  font-size:16px;
-  font-weight:bold;
-}
-#alerta{
-  margin-top:15px;
-  padding:12px;
-  border-radius:8px;
-  text-align:center;
-  font-weight:bold;
-}
-canvas{
-  background:#fff;
-  border-radius:10px;
-  padding:10px;
-  max-height:260px;
-}
-@media(max-width:800px){
-  .grid{grid-template-columns:1fr}
-}
+.container{max-width:1100px;margin:auto;}
+h1,h2{color:var(--laranja);}
+section{background:var(--branco);padding:18px;border-radius:10px;margin-bottom:20px;}
+label{display:block;font-weight:600;margin-top:10px;color:#555;}
+input{width:100%;padding:8px;margin-top:4px;border-radius:6px;border:1px solid #ccc;}
+input[readonly]{background:var(--cinza);}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.resultado{font-size:16px;font-weight:bold;}
+#alerta{margin-top:15px;padding:12px;border-radius:8px;text-align:center;font-weight:bold;}
+canvas{background:#fff;border-radius:10px;padding:10px;max-height:260px;}
+@media(max-width:800px){.grid{grid-template-columns:1fr}}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -86,7 +43,7 @@ canvas{
 <div class="container">
 
 <h1>Pires Acabamentos — Análise de Margem (ST)</h1>
-<p style="color:#ddd">Percentuais em número inteiro (ex: 18 = 18%) • Modelo ST</p>
+<p style="color:#ddd">Percentuais em número inteiro • Markup visível</p>
 
 <section>
 <h2>1. Produto</h2>
@@ -163,6 +120,7 @@ canvas{
 <p class="resultado">Custo líquido: <span id="custoLiquido">R$ 0,00</span></p>
 <p class="resultado">Lucro bruto: <span id="lucroBruto">R$ 0,00</span> (<span id="lucroBrutoPct">0,0%</span>)</p>
 <p class="resultado">Margem de contribuição: <span id="mcValor">R$ 0,00</span> (<span id="mcPct">0,0%</span>)</p>
+<p class="resultado">Markup do produto: <span id="markup">0,0%</span></p>
 <div id="alerta"></div>
 </section>
 
@@ -181,51 +139,55 @@ function moeda(v){return v.toLocaleString('pt-BR',{style:'currency',currency:'BR
 function perc(v){return (v*100).toFixed(1)+'%';}
 
 function calcular(){
-  const custo = Number(custoEl.value)||0;
+  const custo = Number(document.getElementById('custo').value)||0;
 
-  const ipiPerc = (Number(ipiPercEl.value)||0)/100;
-  const pisCred = (Number(pisCredEl.value)||0)/100;
-  const mva = (Number(mvaEl.value)||0)/100;
-  const icmsDeb = (Number(icmsDebEl.value)||0)/100;
-  const icmsCred = (Number(icmsCredEl.value)||0)/100;
+  const ipiPerc = (Number(document.getElementById('ipiPerc').value)||0)/100;
+  const pisCred = (Number(document.getElementById('pisCred').value)||0)/100;
+  const mva = (Number(document.getElementById('mva').value)||0)/100;
+  const icmsDeb = (Number(document.getElementById('icmsDeb').value)||0)/100;
+  const icmsCred = (Number(document.getElementById('icmsCred').value)||0)/100;
 
-  const preco = Number(precoEl.value)||0;
-  const fretePerc = (Number(fretePercEl.value)||0)/100;
-  const comPerc = (Number(comPercEl.value)||0)/100;
+  const preco = Number(document.getElementById('precoVenda').value)||0;
+  const fretePerc = (Number(document.getElementById('fretePerc').value)||0)/100;
+  const comPerc = (Number(document.getElementById('comissaoPerc').value)||0)/100;
 
   const ipiValor = custo * ipiPerc;
-  ipiValorEl.value = moeda(ipiValor);
+  document.getElementById('ipiValor').value = moeda(ipiValor);
 
   const creditoPis = custo * pisCred;
 
   const baseST = (custo + ipiValor) * (1 + mva);
   const st = (baseST * icmsDeb) - (custo * icmsCred);
-  stValorEl.value = moeda(st);
+  document.getElementById('stValor').value = moeda(st);
 
   const custoLiquido = custo + ipiValor - creditoPis + st;
-  custoLiquidoEl.innerText = moeda(custoLiquido);
+  document.getElementById('custoLiquido').innerText = moeda(custoLiquido);
 
   const pisDebito = preco * 0.0925;
   const frete = preco * fretePerc;
-  freteValorEl.value = moeda(frete);
+  document.getElementById('freteValor').value = moeda(frete);
 
   const comissao = preco * comPerc;
-  comissaoValorEl.value = moeda(comissao);
+  document.getElementById('comissaoValor').value = moeda(comissao);
 
   const lucroBruto = preco - custoLiquido - pisDebito;
-  lucroBrutoEl.innerText = moeda(lucroBruto);
-  lucroBrutoPctEl.innerText = perc(preco===0?0:lucroBruto/preco);
+  document.getElementById('lucroBruto').innerText = moeda(lucroBruto);
+  document.getElementById('lucroBrutoPct').innerText = perc(preco===0?0:lucroBruto/preco);
 
   const mcValor = lucroBruto - comissao - frete;
-  mcValorEl.innerText = moeda(mcValor);
-  mcPctEl.innerText = perc(preco===0?0:mcValor/preco);
+  document.getElementById('mcValor').innerText = moeda(mcValor);
+  document.getElementById('mcPct').innerText = perc(preco===0?0:mcValor/preco);
 
+  const markup = custoLiquido===0?0:(preco / custoLiquido) - 1;
+  document.getElementById('markup').innerText = perc(markup);
+
+  const alerta = document.getElementById('alerta');
   if(mcValor/preco < 0.20){
-    alertaEl.style.background='var(--vermelho)';alertaEl.style.color='#fff';alertaEl.innerText='Margem baixa';
+    alerta.style.background='var(--vermelho)';alerta.style.color='#fff';alerta.innerText='Margem baixa';
   }else if(mcValor/preco < 0.27){
-    alertaEl.style.background='var(--amarelo)';alertaEl.style.color='#000';alertaEl.innerText='Margem apertada';
+    alerta.style.background='var(--amarelo)';alerta.style.color='#000';alerta.innerText='Margem apertada';
   }else{
-    alertaEl.style.background='var(--verde)';alertaEl.style.color='#fff';alertaEl.innerText='Margem saudável';
+    alerta.style.background='var(--verde)';alerta.style.color='#fff';alerta.innerText='Margem saudável';
   }
 
   atualizarGrafico(custoLiquido, pisDebito+st, frete, comissao, mcValor);
@@ -237,13 +199,13 @@ function atualizarGrafico(custo, impostos, frete, comissao, margem){
 
   if(pieChart) pieChart.destroy();
 
-  pieChart = new Chart(pieCtx,{
+  pieChart = new Chart(document.getElementById('pieChart'),{
     type:'pie',
     data:{
       labels:labels,
       datasets:[{
         data:dados,
-        backgroundColor:['#1f1f1f','#f36a21','#ff9800','#9e9e9e','#2e7d32']
+        backgroundColor:['#1f1f1f','rgb(210,55,50)','#ff9800','#9e9e9e','#2e7d32']
       }]
     },
     options:{
@@ -253,29 +215,6 @@ function atualizarGrafico(custo, impostos, frete, comissao, margem){
     }
   });
 }
-
-const custoEl = document.getElementById('custo');
-const ipiPercEl = document.getElementById('ipiPerc');
-const pisCredEl = document.getElementById('pisCred');
-const mvaEl = document.getElementById('mva');
-const icmsDebEl = document.getElementById('icmsDeb');
-const icmsCredEl = document.getElementById('icmsCred');
-const precoEl = document.getElementById('precoVenda');
-const fretePercEl = document.getElementById('fretePerc');
-const comPercEl = document.getElementById('comissaoPerc');
-
-const ipiValorEl = document.getElementById('ipiValor');
-const stValorEl = document.getElementById('stValor');
-const custoLiquidoEl = document.getElementById('custoLiquido');
-const freteValorEl = document.getElementById('freteValor');
-const comissaoValorEl = document.getElementById('comissaoValor');
-const lucroBrutoEl = document.getElementById('lucroBruto');
-const lucroBrutoPctEl = document.getElementById('lucroBrutoPct');
-const mcValorEl = document.getElementById('mcValor');
-const mcPctEl = document.getElementById('mcPct');
-const alertaEl = document.getElementById('alerta');
-
-const pieCtx = document.getElementById('pieChart');
 
 document.querySelectorAll('input').forEach(i=>i.addEventListener('input',calcular));
 </script>
